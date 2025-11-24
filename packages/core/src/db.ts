@@ -1,7 +1,7 @@
 // Database connection helper using the pg driver
 // This module provides a simple way to connect to PostgreSQL using raw SQL
 
-import { Pool, QueryResult } from "pg";
+import { Pool, QueryResult, QueryResultRow } from "pg";
 import { Resource } from "sst";
 
 // Create a connection pool to PostgreSQL
@@ -33,7 +33,7 @@ export function getPool(): Pool {
 }
 
 // Execute a SQL query with parameters (prevents SQL injection)
-export async function query<T = any>(
+export async function query<T extends QueryResultRow = QueryResultRow>(
   sql: string,
   params: any[] = []
 ): Promise<QueryResult<T>> {
