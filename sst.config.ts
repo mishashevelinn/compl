@@ -14,7 +14,11 @@ export default $config({
     // Set it using: npx sst secret set DATABASE_URL "postgresql://user:pass@host:5432/dbname"
     const databaseUrl = new sst.Secret("DATABASE_URL");
 
-    // --- QUEUES ---
+    // --- EVENT BUS ---
+    // Create an EventBridge event bus for complaints
+    const eventBus = new sst.aws.Bus("ComplaintEventBus");
+
+    // --- QUEUE ---
     // Create an SQS queue for normal complaints with batching
     const normalComplaintsQueue = new sst.aws.Queue("NormalComplaintsQueue", {
       consumer: {
@@ -27,7 +31,7 @@ export default $config({
             // Allow the function to send emails via SES
             {
               actions: ["ses:SendEmail", "ses:SendRawEmail"],
-              resources: ["*"], // For simplicity, you can restrict this to specific ARNs in production
+              resources: ["*"],
             },
           ],
         },
@@ -40,6 +44,18 @@ export default $config({
       },
     });
 
+    // --- EVENT RULES ---
+    // Route normal complaints to SQS directly from the bus
+    eventBus.subscribeQueue("NormalComplaintsSubscription", normalComplaintsQueue, {
+      pattern: {
+        source: ["com.store.complaints"],
+        detailType: ["ComplaintCreated"],
+        detail: {
+          urgency: ["NORMAL"],
+        },
+      },
+    });
+
     // --- API FUNCTIONS ---
     // Create separate functions for each API operation
     
@@ -48,14 +64,13 @@ export default $config({
       handler: "packages/functions/src/createComplaint.handler",
       environment: {
         DATABASE_URL: databaseUrl.value,
-        NORMAL_COMPLAINTS_QUEUE_URL: normalComplaintsQueue.queueUrl,
+        EVENT_BUS_NAME: eventBus.name,
       },
       permissions: [
-        // Allow the function to send messages to SQS directly
-        // (we'll simulate EventBridge behavior in the Lambda)
+        // Allow the function to put events on the EventBridge bus
         {
-          actions: ["sqs:SendMessage"],
-          resources: ["*"], // Use wildcard resource for simplicity
+          actions: ["events:PutEvents"],
+          resources: [eventBus.arn],
         },
       ],
       url: true,
@@ -84,7 +99,8 @@ export default $config({
       createComplaintUrl: createComplaintFunction.url,
       listComplaintsUrl: listComplaintsFunction.url,
       getComplaintUrl: getComplaintFunction.url,
-      normalComplaintsQueueUrl: normalComplaintsQueue.queueUrl,
+      eventBusName: eventBus.name,
+      eventBusArn: eventBus.arn,
     };
   },
 });

@@ -1,6 +1,9 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { getClient, complaints, NewComplaint } from "../../core/src/db/index.js";
-import { eq } from "drizzle-orm";
+import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
+
+// Initialize EventBridge client
+const eventBridgeClient = new EventBridgeClient({});
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
@@ -35,6 +38,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     // Log environment variables (without sensitive data)
     console.log("Environment variables:", {
       DATABASE_URL_SET: !!process.env.DATABASE_URL,
+      EVENT_BUS_NAME_SET: !!process.env.EVENT_BUS_NAME,
     });
 
     // Initialize database client
@@ -58,25 +62,49 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     const complaint = result[0];
     console.log("Complaint inserted:", complaint);
 
-    // For now, immediately update the status to RESOLVED
-    // (simulating the processing that would normally happen via EventBridge/SQS)
-    await db.update(complaints)
-      .set({ status: "RESOLVED" })
-      .where(eq(complaints.id, complaint.id));
+    // Prepare complaint data for EventBridge
+    const complaintData = {
+      complaintId: complaint.id,
+      title: complaint.title,
+      description: complaint.description,
+      customerEmail: complaint.customerEmail,
+      urgency: complaint.urgency,
+      status: complaint.status,
+      createdAt: complaint.createdAt,
+    };
+
+    // Get the EventBridge bus name from environment variables
+    const eventBusName = process.env.EVENT_BUS_NAME;
     
-    console.log("Complaint status updated to RESOLVED");
+    if (!eventBusName) {
+      console.error("EVENT_BUS_NAME environment variable is not set");
+      throw new Error("EventBus name not configured");
+    }
     
-    // Get the updated complaint
-    const updatedResult = await db.select().from(complaints).where(eq(complaints.id, complaint.id));
-    const updatedComplaint = updatedResult[0];
+    console.log("Sending event to EventBridge:", eventBusName);
+    
+    // Send event to EventBridge
+    const putEventsCommand = new PutEventsCommand({
+      Entries: [
+        {
+          EventBusName: eventBusName,
+          Source: "com.store.complaints",
+          DetailType: "ComplaintCreated",
+          Detail: JSON.stringify(complaintData),
+        },
+      ],
+    });
+    
+    const response = await eventBridgeClient.send(putEventsCommand);
+    console.log("Event sent to EventBridge:", response);
 
     // Return success response
     return {
       statusCode: 201,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        message: "Complaint created successfully and processed",
-        complaint: updatedComplaint,
+        message: "Complaint created successfully and sent for processing",
+        complaint,
       }),
     };
   } catch (error) {

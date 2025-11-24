@@ -5,6 +5,11 @@
 
 declare module "sst" {
   export interface Resource {
+    "ComplaintEventBus": {
+      "arn": string
+      "name": string
+      "type": "sst.aws.Bus"
+    }
     "CreateComplaint": {
       "name": string
       "type": "sst.aws.Function"

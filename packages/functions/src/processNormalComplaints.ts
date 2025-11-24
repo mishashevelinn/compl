@@ -10,7 +10,7 @@ const ADMIN_EMAIL = "michaels@aradtech.com";
 
 export const handler: SQSHandler = async (event) => {
   try {
-    console.log("Processing normal complaints batch:", event);
+    console.log("Processing normal complaints batch:", JSON.stringify(event, null, 2));
     
     // Extract complaints from SQS messages
     // Each message is an EventBridge event that was sent to SQS
@@ -30,6 +30,8 @@ export const handler: SQSHandler = async (event) => {
       await db.update(complaints)
         .set({ status: "IN_PROGRESS" })
         .where(eq(complaints.id, complaint.complaintId));
+      
+      console.log(`Updated complaint ${complaint.complaintId} status to IN_PROGRESS`);
     }
     
     // Generate email content with complaint summaries
@@ -85,6 +87,7 @@ export const handler: SQSHandler = async (event) => {
       Source: ADMIN_EMAIL, // Must be a verified email in SES
     });
     
+    console.log("Sending email notification...");
     await sesClient.send(sendEmailCommand);
     console.log("Email sent successfully");
     
@@ -93,6 +96,8 @@ export const handler: SQSHandler = async (event) => {
       await db.update(complaints)
         .set({ status: "RESOLVED" })
         .where(eq(complaints.id, complaint.complaintId));
+      
+      console.log(`Updated complaint ${complaint.complaintId} status to RESOLVED`);
     }
     
     console.log("All complaints processed successfully");
