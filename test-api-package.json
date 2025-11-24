@@ -1,0 +1,10 @@
+{
+  "name": "test-api",
+  "version": "1.0.0",
+  "description": "Test script for the Complaint Box API",
+  "main": "test-api.js",
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

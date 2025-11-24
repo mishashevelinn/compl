@@ -1,0 +1,62 @@
+# -----------------------------------------------------------------------------
+# PROJECT: The Complaint Box (Serverless Learning Project)
+# -----------------------------------------------------------------------------
+# GOAL: Build a serverless, event-driven app on AWS using SST v3 (Ion).
+# FOCUS: Learning, clarity, and Modern TypeScript practices.
+# -----------------------------------------------------------------------------
+
+# 1. LEARNING & SIMPLICITY PROTOCOL
+# -----------------------------------------------------------------------------
+- **Educational Mode:** Always explain the "WHY" before the "HOW".
+- **No Magic:** Avoid complex one-liners. Write code that is easy to read.
+- **Type Safety:** We are strictly using TypeScript. Avoid `any`.
+- **Database Strategy:** Use **Drizzle ORM** instead of raw SQL strings. This ensures our database code is type-safe and matches our TypeScript objects.
+
+# 2. TECH STACK
+# -----------------------------------------------------------------------------
+- **Framework:** SST v3 (Ion). Use `sst.aws` namespace.
+- **Language:** TypeScript (Node.js).
+- **Cloud:** AWS (Lambda, EventBridge, SQS, SNS).
+- **Database:** PostgreSQL.
+- **ORM:** Drizzle ORM (`drizzle-orm`) with `drizzle-kit` for schema management.
+- **Driver:** `postgres` (or `pg`).
+- **Secrets:** Access via `Resource.DATABASE_URL.value`.
+
+# 3. DIRECTORY STRUCTURE & STANDARDS
+# -----------------------------------------------------------------------------
+- **Infrastructure:** `sst.config.ts`
+- **Database Schema:** `packages/core/src/db/schema.ts` (Define tables here).
+- **Database Client:** `packages/core/src/db/client.ts` (Initialize Drizzle here).
+- **Lambda Functions:** `packages/functions/src/`
+- **Shared Logic:** `packages/core/src/`
+
+# 4. ARCHITECTURE & DATA FLOW
+# -----------------------------------------------------------------------------
+1. **Ingest:** API Gateway (`POST /complaints`) -> Lambda -> Save to DB (Drizzle) -> Publish Event.
+2. **Router (EventBridge):**
+   - Source: "com.store.complaints"
+   - Type: "ComplaintCreated"
+3. **Consumers:**
+   - **URGENT:** EventBridge -> SNS Topic (Admin Alert).
+   - **NORMAL:** EventBridge -> SQS Queue -> Lambda (Report Generator).
+
+# 5. THE THINKING FLOW (Must follow for every request)
+# -----------------------------------------------------------------------------
+Before generating code, you must strictly follow this process:
+
+**PHASE 1: EXPLANATION**
+- Briefly explain the goal.
+- If database changes are needed, explain the Drizzle Schema change first.
+
+**PHASE 2: INFRASTRUCTURE & SCHEMA**
+- Update `sst.config.ts` if AWS resources are needed.
+- Update `packages/core/src/db/schema.ts` if data structures change.
+- **Crucial:** Remind me to run `npx drizzle-kit push` if the schema changed.
+
+**PHASE 3: APPLICATION CODE**
+- Write the Lambda function.
+- Use `db.insert(...)` or `db.select(...)` (Drizzle Syntax).
+- Add comments explaining key lines.
+
+**PHASE 4: VERIFICATION**
+- Tell me exactly how to test it (e.g., "Run this curl command...").

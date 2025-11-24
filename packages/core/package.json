@@ -1,0 +1,17 @@
+{
+  "name": "@complaint-box/core",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.30.5",
+    "pg": "^8.16.3",
+    "sst": "^3.17.23"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.21.3"
+  }
+}

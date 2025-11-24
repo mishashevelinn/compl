@@ -1,0 +1,15 @@
+{
+  "name": "@complaint-box/functions",
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "@complaint-box/core": "workspace:*",
+    "aws-lambda": "^1.0.7",
+    "drizzle-orm": "^0.30.5",
+    "sst": "^3.17.23"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.159",
+    "@types/node": "^24.10.1"
+  }
+}

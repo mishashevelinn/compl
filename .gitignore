@@ -1,0 +1,9 @@
+node_modules/
+/.sst
+dist/
+packages/**/dist/
+*.log
+*.env
+*.local
+coverage/
+

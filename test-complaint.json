@@ -1,0 +1,6 @@
+{
+  "title": "Test Complaint",
+  "description": "This is a test complaint submitted via Postman",
+  "customerEmail": "test@example.com",
+  "urgency": "NORMAL"
+}
