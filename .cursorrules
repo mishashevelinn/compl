@@ -60,3 +60,24 @@ Before generating code, you must strictly follow this process:
 
 **PHASE 4: VERIFICATION**
 - Tell me exactly how to test it (e.g., "Run this curl command...").
+
+When generating any SST code, always use SST version 3.17.23.
+Use the new construct format from SST v3 (not SST v1/v2).
+Do not generate “sst.Api” or “sst.Function” from SST 1.x syntax.
+Use the correct v3 syntax, for example:
+
+import { StackContext, Api, Function } from "sst/constructs";
+
+export function MyStack({ stack }: StackContext) {
+  const api = new Api(stack, "api", {
+    routes: {
+      "GET /": "src/lambda.handler",
+    },
+  });
+
+  stack.addOutputs({
+    ApiEndpoint: api.url,
+  });
+}
+
+Always check package.json to confirm SST version before generating.
